@@ -4,6 +4,9 @@ import domain.Account;
 import domain.Customer;
 import domain.Transaction;
 import domain.Type;
+import exceptions.AccountNotFoundException;
+import exceptions.InsufficientFundsException;
+import exceptions.ValidationException;
 import repository.AccountRepository;
 import repository.CustomerRepository;
 import repository.TransactionRepository;
@@ -13,16 +16,35 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import util.*;
+
 public class BankServiceImpl implements BankService {
 
     private final AccountRepository accountRepository = new AccountRepository();
     private final TransactionRepository transactionRepository = new TransactionRepository();
     private final CustomerRepository customerRepository = new CustomerRepository();
 
+    private final Validation<String> validatorName = name -> {
+        if (name == null || name.isBlank()) throw new ValidationException("Name is required");
+
+    };
+
+    private final Validation<String> validateEmail = email -> {
+        if (email == null || email.isBlank() || !email.contains("@"))
+            throw new ValidationException("Email is required");
+    };
+
+    private final Validation<String> validateType = type -> {
+        if (type == null || !(type.equalsIgnoreCase("SAVING") || type.contains("CURRENT")))
+            throw new ValidationException("type must be SAVING or CURRENT");
+    };
+
     public String openAccount(String name, String email, String accountType) {
         String customerId = UUID.randomUUID().toString();
 //          String customerId = accountType;
-
+        validatorName.validate(name);
+        validatorName.validate(email);
+        validatorName.validate(accountType);
         Customer c = new Customer(email, name, customerId);
         customerRepository.save(c);
 //        String accountNumber = UUID.randomUUID().toString();
@@ -49,7 +71,7 @@ public class BankServiceImpl implements BankService {
     public void deposit(String accountNumber, Double amount, String note) {
 
         Account account = accountRepository.findByNumber(accountNumber)
-                .orElseThrow(() -> new RuntimeException(
+                .orElseThrow(() -> new AccountNotFoundException(
                         "Account not found: " + accountNumber
                 ));
 
@@ -76,11 +98,11 @@ public class BankServiceImpl implements BankService {
     @Override
     public void withdraw(String accountNumber, Double amount, String note) {
         Account account = accountRepository.findByNumber(accountNumber)
-                .orElseThrow(() -> new RuntimeException(
+                .orElseThrow(() -> new AccountNotFoundException(
                         "Account not found: " + accountNumber
                 ));
         if (account.getBalance().compareTo(amount) < 0) {
-            throw new RuntimeException("Insufficient Balance");
+            throw new InsufficientFundsException("Insufficient Balance");
         }
         // Update balance
         account.setBalance(account.getBalance() - amount);
@@ -105,18 +127,18 @@ public class BankServiceImpl implements BankService {
     @Override
     public void transfer(String fromAcc, String toAcc, Double amount, String note) {
         if (fromAcc.equals(toAcc)) {
-            throw new RuntimeException("Cannot transfer to the account");
+            throw new ValidationException("Cannot transfer to the account");
         }
         Account from = accountRepository.findByNumber(fromAcc)
-                .orElseThrow(() -> new RuntimeException(
+                .orElseThrow(() -> new AccountNotFoundException(
                         "Account not found: " + fromAcc
                 ));
         Account to = accountRepository.findByNumber(toAcc)
-                .orElseThrow(() -> new RuntimeException(
+                .orElseThrow(() -> new AccountNotFoundException(
                         "Account not found: " + toAcc
                 ));
         if (from.getBalance().compareTo(amount) < 0) {
-            throw new RuntimeException("insufficient Balance");
+            throw new InsufficientFundsException("insufficient Balance");
         }
         from.setBalance(from.getBalance() - amount);
         to.setBalance(to.getBalance() + amount);
