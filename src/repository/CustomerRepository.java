@@ -15,6 +15,6 @@ public class CustomerRepository {
     }
 
     public void save(Customer c) {
-      customerById.put(c.getId(),c);
+        customerById.put(c.getId(), c);
     }
 }

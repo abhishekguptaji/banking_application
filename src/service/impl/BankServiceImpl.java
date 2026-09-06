@@ -15,33 +15,34 @@ import java.util.stream.Collectors;
 
 public class BankServiceImpl implements BankService {
 
-      private final AccountRepository accountRepository = new AccountRepository();
-      private final TransactionRepository transactionRepository = new TransactionRepository();
-      private final CustomerRepository customerRepository = new CustomerRepository();
-      public String openAccount(String name,String email, String accountType){
+    private final AccountRepository accountRepository = new AccountRepository();
+    private final TransactionRepository transactionRepository = new TransactionRepository();
+    private final CustomerRepository customerRepository = new CustomerRepository();
+
+    public String openAccount(String name, String email, String accountType) {
         String customerId = UUID.randomUUID().toString();
 //          String customerId = accountType;
 
-          Customer c =  new Customer(email,name,customerId);
-          customerRepository.save(c);
+        Customer c = new Customer(email, name, customerId);
+        customerRepository.save(c);
 //        String accountNumber = UUID.randomUUID().toString();
-          String accountNumber = getAccountNumber();
+        String accountNumber = getAccountNumber();
 
-          Account account = new Account(accountNumber,accountType,(double)0,customerId);
-          accountRepository.save(account);
+        Account account = new Account(accountNumber, accountType, (double) 0, customerId);
+        accountRepository.save(account);
 
-          return accountNumber;
-      }
+        return accountNumber;
+    }
 
     private String getAccountNumber() {
         int size = accountRepository.findAll().size() + 1;
-        return String.format("AC%06d",size);
+        return String.format("AC%06d", size);
     }
 
-    public List<Account>  listAccounts(){
-          return accountRepository.findAll().stream()
-                  .sorted(Comparator.comparing(Account::getAccountNumber))
-                  .collect(Collectors.toList());
+    public List<Account> listAccounts() {
+        return accountRepository.findAll().stream()
+                .sorted(Comparator.comparing(Account::getAccountNumber))
+                .collect(Collectors.toList());
     }
 
     @Override
@@ -78,9 +79,9 @@ public class BankServiceImpl implements BankService {
                 .orElseThrow(() -> new RuntimeException(
                         "Account not found: " + accountNumber
                 ));
-          if (account.getBalance().compareTo(amount) < 0){
-              throw new RuntimeException("Insufficient Balance");
-          }
+        if (account.getBalance().compareTo(amount) < 0) {
+            throw new RuntimeException("Insufficient Balance");
+        }
         // Update balance
         account.setBalance(account.getBalance() - amount);
 
@@ -106,19 +107,19 @@ public class BankServiceImpl implements BankService {
         if (fromAcc.equals(toAcc)) {
             throw new RuntimeException("Cannot transfer to the account");
         }
-            Account from = accountRepository.findByNumber(fromAcc)
-                    .orElseThrow(() -> new RuntimeException(
-                            "Account not found: " + fromAcc
-                    ));
-            Account to = accountRepository.findByNumber(toAcc)
+        Account from = accountRepository.findByNumber(fromAcc)
+                .orElseThrow(() -> new RuntimeException(
+                        "Account not found: " + fromAcc
+                ));
+        Account to = accountRepository.findByNumber(toAcc)
                 .orElseThrow(() -> new RuntimeException(
                         "Account not found: " + toAcc
                 ));
-            if (from.getBalance().compareTo(amount) < 0) {
-                throw new RuntimeException("insufficient Balance");
+        if (from.getBalance().compareTo(amount) < 0) {
+            throw new RuntimeException("insufficient Balance");
         }
-            from.setBalance(from.getBalance() -amount);
-            to.setBalance(to.getBalance() + amount);
+        from.setBalance(from.getBalance() - amount);
+        to.setBalance(to.getBalance() + amount);
         Transaction fromTransaction = new Transaction(
                 UUID.randomUUID().toString(), // id
                 Type.TRANSFER_OUT,                 // type

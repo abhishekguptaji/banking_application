@@ -7,9 +7,9 @@ import java.util.List;
 import java.util.Map;
 
 public interface BankService {
-    String openAccount(String name,String email,String accountType);
-    List<Account> listAccounts();
+    String openAccount(String name, String email, String accountType);
 
+    List<Account> listAccounts();
 
     void deposit(String accountNumber, Double amount, String note);
 
@@ -19,5 +19,5 @@ public interface BankService {
 
     List<Transaction> getStatement(String account);
 
-     List<Account> searchAccountByCustomerName(String q);
+    List<Account> searchAccountByCustomerName(String q);
 }
